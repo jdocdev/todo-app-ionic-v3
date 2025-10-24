@@ -1,7 +1,10 @@
 {
   "name": "todo-app-ionic-v3",
   "integrations": {
-    "capacitor": {}
+    "capacitor": {
+      "enabled": false
+    },
+    "cordova": {}
   },
   "type": "angular"
 }
