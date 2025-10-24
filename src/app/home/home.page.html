@@ -1,0 +1,75 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>To-Do List</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Sección de categorías -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        Categorías
+        <ion-button size="small" fill="clear" (click)="createCategory()">
+          <ion-icon name="add-circle"></ion-icon>
+        </ion-button>
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Filtros de categorías -->
+      <ion-chip [color]="selectedCategoryId === 'all' ? 'primary' : 'medium'" (click)="filterByCategory('all')">
+        <ion-label>Todas</ion-label>
+      </ion-chip>
+
+      <ion-chip *ngFor="let cat of categories" [style.--background]="cat.color"
+        [color]="selectedCategoryId === cat.id ? 'primary' : 'medium'" (click)="filterByCategory(cat.id)">
+        <ion-label>{{ cat.name }}</ion-label>
+        <ion-icon name="create" (click)="editCategory(cat); $event.stopPropagation()"></ion-icon>
+        <ion-icon name="close-circle" (click)="deleteCategory(cat); $event.stopPropagation()"></ion-icon>
+      </ion-chip>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Agregar nueva tarea -->
+  <ion-item>
+    <ion-input [(ngModel)]="newTaskTitle" placeholder="Nueva tarea..." (keyup.enter)="addTask()">
+    </ion-input>
+    <ion-button slot="end" (click)="addTask()">
+      <ion-icon name="add"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+  <!-- Lista de tareas -->
+  <ion-list>
+    <ion-item-sliding *ngFor="let task of filteredTasks">
+      <ion-item>
+        <!-- Checkbox para completar -->
+        <ion-checkbox slot="start" [checked]="task.completed" (ionChange)="toggleTask(task)">
+        </ion-checkbox>
+
+        <!-- Título de la tarea -->
+        <ion-label [class.completed]="task.completed">
+          {{ task.title }}
+          <p>
+            <ion-badge [style.--background]="getCategoryColor(task.categoryId)">
+              {{ getCategoryName(task.categoryId) }}
+            </ion-badge>
+          </p>
+        </ion-label>
+      </ion-item>
+
+      <!-- Botón deslizable para eliminar -->
+      <ion-item-options side="end">
+        <ion-item-option color="danger" (click)="deleteTask(task)">
+          <ion-icon name="trash"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+
+  <!-- Mensaje cuando no hay tareas -->
+  <div *ngIf="filteredTasks.length === 0" class="empty-state">
+    <ion-icon name="checkmark-done-outline" size="large"></ion-icon>
+    <p>No hay tareas en esta categoría</p>
+  </div>
+</ion-content>

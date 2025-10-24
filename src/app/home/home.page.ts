@@ -1,0 +1,197 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { IonicModule, AlertController } from '@ionic/angular';
+import { StorageService } from '../services/storage.service';
+import { Task, Category } from '../models/task.model';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule, FormsModule, IonicModule],
+  templateUrl: 'home.page.html',
+  styleUrls: ['home.page.scss'],
+})
+export class HomePage implements OnInit {
+  // Lista de tareas y categorías
+  tasks: Task[] = [];
+  categories: Category[] = [];
+
+  // Filtro actual
+  selectedCategoryId: string = 'all';
+
+  // Nueva tarea
+  newTaskTitle: string = '';
+
+  constructor(
+    private storage: StorageService,
+    private alertController: AlertController
+  ) {}
+
+  ngOnInit() {
+    // Cargar datos al iniciar
+    this.loadData();
+  }
+
+  // Cargar tareas y categorías
+  loadData() {
+    this.tasks = this.storage.getTasks();
+    this.categories = this.storage.getCategories();
+  }
+
+  // Obtener tareas filtradas
+  get filteredTasks(): Task[] {
+    if (this.selectedCategoryId === 'all') {
+      return this.tasks;
+    }
+    return this.tasks.filter((t) => t.categoryId === this.selectedCategoryId);
+  }
+
+  // Agregar nueva tarea
+  addTask() {
+    if (this.newTaskTitle.trim()) {
+      const categoryId =
+        this.selectedCategoryId !== 'all' ? this.selectedCategoryId : undefined;
+      this.storage.addTask(this.newTaskTitle.trim(), categoryId);
+      this.newTaskTitle = '';
+      this.loadData();
+    }
+  }
+
+  // Marcar o desmarcar tarea como completada
+  toggleTask(task: Task) {
+    this.storage.toggleTaskComplete(task.id);
+    this.loadData();
+  }
+
+  // Eliminar tarea
+  async deleteTask(task: Task) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar',
+      message: '¿Eliminar esta tarea?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          handler: () => {
+            this.storage.deleteTask(task.id);
+            this.loadData();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Obtener color de categoría
+  getCategoryColor(categoryId?: string): string {
+    if (!categoryId) return '#ccc';
+    const category = this.categories.find((c) => c.id === categoryId);
+    return category ? category.color : '#ccc';
+  }
+
+  // Obtener nombre de categoría
+  getCategoryName(categoryId?: string): string {
+    if (!categoryId) return 'Sin categoría';
+    const category = this.categories.find((c) => c.id === categoryId);
+    return category ? category.name : 'Sin categoría';
+  }
+
+  // Cambiar filtro de categoría
+  filterByCategory(categoryId: string) {
+    this.selectedCategoryId = categoryId;
+  }
+
+  // Crear nueva categoría
+  async createCategory() {
+    const alert = await this.alertController.create({
+      header: 'Nueva Categoría',
+      inputs: [
+        {
+          name: 'name',
+          type: 'text',
+          placeholder: 'Nombre de la categoría',
+        },
+        {
+          name: 'color',
+          type: 'text',
+          placeholder: 'Color (ej: #ff0000)',
+          value: '#' + Math.floor(Math.random() * 16777215).toString(16),
+        },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Crear',
+          handler: (data) => {
+            if (data.name.trim()) {
+              this.storage.addCategory(data.name.trim(), data.color);
+              this.loadData();
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Editar categoría
+  async editCategory(category: Category) {
+    const alert = await this.alertController.create({
+      header: 'Editar Categoría',
+      inputs: [
+        {
+          name: 'name',
+          type: 'text',
+          placeholder: 'Nombre',
+          value: category.name,
+        },
+        {
+          name: 'color',
+          type: 'text',
+          placeholder: 'Color',
+          value: category.color,
+        },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            if (data.name.trim()) {
+              this.storage.updateCategory(category.id, {
+                name: data.name.trim(),
+                color: data.color,
+              });
+              this.loadData();
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Eliminar categoría
+  async deleteCategory(category: Category) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar',
+      message:
+        '¿Eliminar esta categoría? Las tareas asociadas no se eliminarán.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          handler: () => {
+            this.storage.deleteCategory(category.id);
+            if (this.selectedCategoryId === category.id) {
+              this.selectedCategoryId = 'all';
+            }
+            this.loadData();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+}
