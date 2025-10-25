@@ -21,7 +21,7 @@
         <ion-label>Todas</ion-label>
       </ion-chip>
 
-      <ion-chip *ngFor="let cat of categories" [style.--background]="cat.color"
+      <ion-chip *ngFor="let cat of categories; trackBy: trackByCategoryId" [style.--background]="cat.color"
         [color]="selectedCategoryId === cat.id ? 'primary' : 'medium'" (click)="filterByCategory(cat.id)">
         <ion-label>{{ cat.name }}</ion-label>
         <ion-icon name="create" (click)="editCategory(cat); $event.stopPropagation()"></ion-icon>
@@ -54,7 +54,7 @@
 
   <!-- Lista de tareas -->
   <ion-list>
-    <ion-item-sliding *ngFor="let task of filteredTasks">
+    <ion-item-sliding *ngFor="let task of filteredTasks; trackBy: trackByTaskId">
       <ion-item>
         <!-- Checkbox para completar -->
         <ion-checkbox slot="start" [checked]="task.completed" (ionChange)="toggleTask(task)">

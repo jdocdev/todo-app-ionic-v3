@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController, ToastController } from '@ionic/angular';
@@ -12,6 +12,7 @@ import { Task, Category } from '../models/task.model';
   imports: [CommonModule, FormsModule, IonicModule],
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePage implements OnInit {
   // Lista de tareas y categorías
@@ -30,7 +31,8 @@ export class HomePage implements OnInit {
     private storage: StorageService,
     private firebase: FirebaseService,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -40,10 +42,23 @@ export class HomePage implements OnInit {
     this.loadData();
   }
 
-  // Cargar tareas y categorías
+  // Cargar tareas y categorías (solo en init)
   loadData() {
     this.tasks = this.storage.getTasks();
     this.categories = this.storage.getCategories();
+    this.cdr.markForCheck();
+  }
+
+  // Actualizar tareas sin recargar categorías (optimizado)
+  private updateTasks() {
+    this.tasks = this.storage.getTasks();
+    this.cdr.markForCheck();
+  }
+
+  // Actualizar categorías sin recargar tareas (optimizado)
+  private updateCategories() {
+    this.categories = this.storage.getCategories();
+    this.cdr.markForCheck();
   }
 
   // Obtener tareas filtradas
@@ -72,14 +87,14 @@ export class HomePage implements OnInit {
         this.selectedCategoryId !== 'all' ? this.selectedCategoryId : undefined;
       this.storage.addTask(this.newTaskTitle.trim(), categoryId);
       this.newTaskTitle = '';
-      this.loadData();
+      this.updateTasks();
     }
   }
 
   // Marcar o desmarcar tarea como completada
   toggleTask(task: Task) {
     this.storage.toggleTaskComplete(task.id);
-    this.loadData();
+    this.updateTasks();
   }
 
   // Eliminar tarea
@@ -93,7 +108,7 @@ export class HomePage implements OnInit {
           text: 'Eliminar',
           handler: () => {
             this.storage.deleteTask(task.id);
-            this.loadData();
+            this.updateTasks();
           },
         },
       ],
@@ -144,7 +159,7 @@ export class HomePage implements OnInit {
           handler: (data) => {
             if (data.name.trim()) {
               this.storage.addCategory(data.name.trim(), data.color);
-              this.loadData();
+              this.updateCategories();
             }
           },
         },
@@ -181,7 +196,7 @@ export class HomePage implements OnInit {
                 name: data.name.trim(),
                 color: data.color,
               });
-              this.loadData();
+              this.updateCategories();
             }
           },
         },
@@ -205,11 +220,21 @@ export class HomePage implements OnInit {
             if (this.selectedCategoryId === category.id) {
               this.selectedCategoryId = 'all';
             }
-            this.loadData();
+            this.updateCategories();
           },
         },
       ],
     });
     await alert.present();
+  }
+
+  // TrackBy para optimizar *ngFor - mejora rendimiento con listas grandes
+  trackByTaskId(index: number, task: Task): string {
+    return task.id;
+  }
+
+  // TrackBy para categorías
+  trackByCategoryId(index: number, category: Category): string {
+    return category.id;
   }
 }
