@@ -39,6 +39,19 @@
     </ion-button>
   </ion-item>
 
+  <!-- Indicador de límite de tareas (Feature Flag) -->
+  <ion-card *ngIf="limitEnabled">
+    <ion-card-content>
+      <ion-text color="medium" class="ion-text-center">
+        <p>
+          <strong>Tareas: {{ tasks.length }}/{{ maxTasks }}</strong>
+          <ion-progress-bar [value]="tasks.length / maxTasks" 
+            [color]="(tasks.length / maxTasks) > 0.8 ? 'warning' : 'primary'"></ion-progress-bar>
+        </p>
+      </ion-text>
+    </ion-card-content>
+  </ion-card>
+
   <!-- Lista de tareas -->
   <ion-list>
     <ion-item-sliding *ngFor="let task of filteredTasks">

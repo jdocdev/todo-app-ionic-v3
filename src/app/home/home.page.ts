@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, AlertController } from '@ionic/angular';
+import { IonicModule, AlertController, ToastController } from '@ionic/angular';
 import { StorageService } from '../services/storage.service';
+import { FirebaseService } from '../services/firebase.service';
 import { Task, Category } from '../models/task.model';
 
 @Component({
@@ -22,14 +23,20 @@ export class HomePage implements OnInit {
 
   // Nueva tarea
   newTaskTitle: string = '';
+  limitEnabled: boolean = false;
+  maxTasks: number = 50;
 
   constructor(
     private storage: StorageService,
-    private alertController: AlertController
+    private firebase: FirebaseService,
+    private alertController: AlertController,
+    private toastController: ToastController
   ) {}
 
-  ngOnInit() {
-    // Cargar datos al iniciar
+  async ngOnInit() {
+    await this.firebase.init();
+    this.limitEnabled = this.firebase.isTaskLimitEnabled();
+    this.maxTasks = this.firebase.getMaxTasksLimit();
     this.loadData();
   }
 
@@ -48,8 +55,19 @@ export class HomePage implements OnInit {
   }
 
   // Agregar nueva tarea
-  addTask() {
+  async addTask() {
     if (this.newTaskTitle.trim()) {
+      // Validar límite de tareas si está habilitado
+      if (this.limitEnabled && this.tasks.length >= this.maxTasks) {
+        const toast = await this.toastController.create({
+          message: `Límite de ${this.maxTasks} tareas alcanzado`,
+          duration: 2000,
+          position: 'top',
+          color: 'warning'
+        });
+        await toast.present();
+        return;
+      }
       const categoryId =
         this.selectedCategoryId !== 'all' ? this.selectedCategoryId : undefined;
       this.storage.addTask(this.newTaskTitle.trim(), categoryId);
