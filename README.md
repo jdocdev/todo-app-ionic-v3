@@ -94,3 +94,21 @@ El APK final se encuentra en:
 La aplicación quedó configurada con Cordova, compilada y ejecutada correctamente en Android, y con estructura completa para iOS.  
 Ejecución confirmada: `LAUNCH SUCCESS`
 ```
+
+---
+
+## 7. Generar APK e IPA (Versiones sin firmar)
+
+### APK (Android)
+```bash
+npm run build
+cordova build android --debug
+```
+**Archivo:** `platforms/android/app/build/outputs/apk/debug/app-debug.apk`
+
+### IPA (iOS)
+```bash
+npm run build
+cordova prepare ios
+```
+**Abrir en Xcode:** `platforms/ios/todo-app-ionic-v3.xcworkspace`
