@@ -37,8 +37,11 @@ export class HomePage implements OnInit {
 
   async ngOnInit() {
     await this.firebase.init();
-    this.limitEnabled = this.firebase.isTaskLimitEnabled();
-    this.maxTasks = this.firebase.getMaxTasksLimit();
+    this.firebase.limitSettings$.subscribe(settings => {
+      this.limitEnabled = settings.enabled;
+      this.maxTasks = settings.maxTasks;
+      this.cdr.markForCheck();
+    });
     this.loadData();
   }
 
